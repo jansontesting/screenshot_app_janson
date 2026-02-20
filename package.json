@@ -4,7 +4,7 @@
   "description": "API that receives HTML, renders it, and returns a full-page WebP screenshot",
   "private": true,
   "engines": {
-    "node": "18.x"
+    "node": "24.x"
   },
   "dependencies": {
     "@sparticuz/chromium": "^131.0.1",
