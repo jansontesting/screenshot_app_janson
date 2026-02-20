@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "functions": {
+    "api/screenshot.js": {
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  },
+  "routes": [
+    {
+      "src": "/api/screenshot",
+      "methods": ["POST", "OPTIONS"],
+      "dest": "/api/screenshot.js"
+    }
+  ]
+}

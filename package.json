@@ -1,0 +1,13 @@
+{
+  "name": "html-screenshot-api",
+  "version": "1.0.0",
+  "description": "API that receives HTML, renders it, and returns a full-page WebP screenshot",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@sparticuz/chromium": "^131.0.1",
+    "puppeteer-core": "^23.9.0"
+  }
+}
