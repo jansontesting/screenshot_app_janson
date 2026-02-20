@@ -1,9 +1,13 @@
-const chromium = require("@sparticuz/chromium");
+const chromium = require("@sparticuz/chromium-min");
 const puppeteer = require("puppeteer-core");
+
+// Remote Chromium build that matches @sparticuz/chromium-min v131
+const CHROMIUM_PACK_URL =
+  "https://github.com/nichochar/chromium-for-lambda/releases/download/v131.0.1/chromium-v131.0.1-pack.tar";
 
 // Vercel serverless function config
 module.exports.config = {
-  maxDuration: 60, // 60 second timeout (Pro plan), adjust if on Hobby (10s)
+  maxDuration: 60,
 };
 
 module.exports = async function handler(req, res) {
@@ -25,16 +29,13 @@ module.exports = async function handler(req, res) {
   const contentType = (req.headers["content-type"] || "").toLowerCase();
 
   if (contentType.includes("application/json")) {
-    // JSON body: { "html": "<html>..." }
     html = req.body?.html;
   } else if (
     contentType.includes("text/html") ||
     contentType.includes("text/plain")
   ) {
-    // Raw HTML body
     html = typeof req.body === "string" ? req.body : JSON.stringify(req.body);
   } else {
-    // Fallback: try to get html from body
     html = req.body?.html || req.body;
   }
 
@@ -56,32 +57,35 @@ module.exports = async function handler(req, res) {
 
   // ── Options from query params ─────────────────────────────────────
   const viewportWidth = parseInt(req.query?.width, 10) || 800;
-  const quality = Math.min(100, Math.max(1, parseInt(req.query?.quality, 10) || 80));
-  const fullPage = req.query?.fullPage !== "false"; // default true
+  const quality = Math.min(
+    100,
+    Math.max(1, parseInt(req.query?.quality, 10) || 80)
+  );
+  const fullPage = req.query?.fullPage !== "false";
 
   let browser = null;
 
   try {
     // ── Launch headless Chromium ───────────────────────────────────
+    const executablePath = await chromium.executablePath(CHROMIUM_PACK_URL);
+
     browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: {
         width: viewportWidth,
         height: 900,
-        deviceScaleFactor: 2, // retina-quality screenshots
+        deviceScaleFactor: 2,
       },
-      executablePath: await chromium.executablePath(),
+      executablePath,
       headless: chromium.headless,
     });
 
     const page = await browser.newPage();
 
-    // Block unnecessary external resources for speed
+    // Block heavy external resources for speed
     await page.setRequestInterception(true);
     page.on("request", (request) => {
       const resourceType = request.resourceType();
-      // Allow: document, stylesheet, image, font, script (emails may use inline scripts)
-      // Block: media, websocket, manifest, other
       if (["media", "websocket", "manifest"].includes(resourceType)) {
         request.abort();
       } else {
@@ -96,7 +100,9 @@ module.exports = async function handler(req, res) {
     });
 
     // Give images a moment to render
-    await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 500)));
+    await page.evaluate(
+      () => new Promise((resolve) => setTimeout(resolve, 500))
+    );
 
     // ── Take full-page screenshot as WebP ─────────────────────────
     const screenshotBuffer = await page.screenshot({
