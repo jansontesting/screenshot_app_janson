@@ -12,5 +12,8 @@
       "methods": ["POST", "OPTIONS"],
       "dest": "/api/screenshot.js"
     }
-  ]
+  ],
+  "env": {
+    "AWS_LAMBDA_JS_RUNTIME": "nodejs18.x"
+  }
 }

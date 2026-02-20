@@ -4,10 +4,10 @@
   "description": "API that receives HTML, renders it, and returns a full-page WebP screenshot",
   "private": true,
   "engines": {
-    "node": ">=18"
+    "node": "18.x"
   },
   "dependencies": {
-    "@sparticuz/chromium-min": "^131.0.1",
+    "@sparticuz/chromium": "^131.0.1",
     "puppeteer-core": "^23.9.0"
   }
 }

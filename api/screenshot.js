@@ -1,9 +1,4 @@
-const chromium = require("@sparticuz/chromium-min");
-const puppeteer = require("puppeteer-core");
-
-// Remote Chromium build that matches @sparticuz/chromium-min v131
-const CHROMIUM_PACK_URL =
-  "https://github.com/nichochar/chromium-for-lambda/releases/download/v131.0.1/chromium-v131.0.1-pack.tar";
+const path = require("path");
 
 // Vercel serverless function config
 module.exports.config = {
@@ -66,18 +61,25 @@ module.exports = async function handler(req, res) {
   let browser = null;
 
   try {
-    // ── Launch headless Chromium ───────────────────────────────────
-    const executablePath = await chromium.executablePath(CHROMIUM_PACK_URL);
+    // Lazy-load to ensure env is set before module loads
+    const chromium = require("@sparticuz/chromium");
+    const puppeteer = require("puppeteer-core");
 
+    // ── FIX: Set LD_LIBRARY_PATH so Chromium can find libnss3.so etc ──
+    const execPath = await chromium.executablePath();
+    const chromiumDir = path.dirname(execPath);
+    process.env.LD_LIBRARY_PATH = `${chromiumDir}:${process.env.LD_LIBRARY_PATH || ""}`;
+
+    // ── Launch headless Chromium ───────────────────────────────────
     browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: {
         width: viewportWidth,
         height: 900,
-        deviceScaleFactor: 2,
+        deviceScaleFactor: 1,
       },
-      executablePath,
-      headless: chromium.headless,
+      executablePath: execPath,
+      headless: "shell",
     });
 
     const page = await browser.newPage();
@@ -101,7 +103,7 @@ module.exports = async function handler(req, res) {
 
     // Give images a moment to render
     await page.evaluate(
-      () => new Promise((resolve) => setTimeout(resolve, 500))
+      () => new Promise((resolve) => setTimeout(resolve, 300))
     );
 
     // ── Take full-page screenshot as WebP ─────────────────────────
